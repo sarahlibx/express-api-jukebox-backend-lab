@@ -3,6 +3,7 @@
 const express = require("express");
 const Track = require("../models/track.js");
 const router = express.Router();
+const axios = require('axios');
 
 // POST - /tracks create a track
 router.post('/', async (req, res) => {
@@ -13,6 +14,34 @@ router.post('/', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// POST /tracks/search-and-add API call
+router.post('/search-and-add', async (req, res) => {
+    try {
+        const { query } = req.body;
+        // call the API
+        const response = await axios.get(`https://itunes.apple.com/search?term=${query}&limit=1&entity=song`);
+
+        if (response.data.results.length === 0) {
+            return res.status(404).json({ error: 'No tracks found on itunes'});
+        }
+        const externalTrack = response.data.results[0];
+
+        // map external data to mongoose schema
+        const trackData = {
+            title: externalTrack.trackName,
+            artist: externalTrack.artistName,
+            coverArt: externalTrack.artworkUrl100
+        };
+
+        // save to mongodb
+        const newTrack = await Track.create(trackData);
+        
+        res.status(201).json(newTrack);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+})
 
 // GET - /tracks list all tracks
 router.get('/', async (req, res) => {

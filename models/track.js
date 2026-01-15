@@ -8,6 +8,11 @@ const trackSchema = new mongoose.Schema({
     artist: {
         type: String, 
         required: true
+    },
+    coverArt: {
+        type: String,
+        required: false, 
+        default: 'https://via.placeholder.com/150?text=No+Cover+Art' 
     }
 },
     {timestamps: true}
